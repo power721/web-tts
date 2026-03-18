@@ -24,6 +24,23 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="rate-slider">语速调节: <span id="rate-value">正常</span></label>
+                    <div class="rate-control">
+                        <span class="rate-label">慢</span>
+                        <input type="range" id="rate-slider" min="-50" max="100" value="0" step="10">
+                        <span class="rate-label">快</span>
+                    </div>
+                    <div class="rate-percentages">
+                        <span class="rate-option" data-rate="-50">0.5x</span>
+                        <span class="rate-option" data-rate="-25">0.75x</span>
+                        <span class="rate-option active" data-rate="0">1x</span>
+                        <span class="rate-option" data-rate="25">1.25x</span>
+                        <span class="rate-option" data-rate="50">1.5x</span>
+                        <span class="rate-option" data-rate="100">2x</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label for="text-input">输入文本</label>
                     <textarea
                         id="text-input"

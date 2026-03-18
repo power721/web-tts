@@ -2,11 +2,14 @@
 let voices = [];
 let audioList = [];
 let currentAudioId = null;
+let currentRate = 0; // 语速，0表示正常
 
 // DOM元素
 const voiceSelect = document.getElementById('voice-select');
 const textInput = document.getElementById('text-input');
 const charCount = document.getElementById('char-count');
+const rateSlider = document.getElementById('rate-slider');
+const rateValue = document.getElementById('rate-value');
 const generateBtn = document.getElementById('generate-btn');
 const refreshBtn = document.getElementById('refresh-btn');
 const audioListContainer = document.getElementById('audio-list');
@@ -24,6 +27,60 @@ function setupEventListeners() {
     textInput.addEventListener('input', updateCharCount);
     generateBtn.addEventListener('click', generateAudio);
     refreshBtn.addEventListener('click', loadAudioList);
+    setupRateControl();
+}
+
+// 设置语速控制
+function setupRateControl() {
+    // 滑块控制
+    rateSlider.addEventListener('input', (e) => {
+        currentRate = parseInt(e.target.value);
+        updateRateDisplay();
+        updateRateOptions();
+    });
+
+    // 快捷按钮控制
+    document.querySelectorAll('.rate-option').forEach(option => {
+        option.addEventListener('click', () => {
+            currentRate = parseInt(option.dataset.rate);
+            rateSlider.value = currentRate;
+            updateRateDisplay();
+            updateRateOptions();
+        });
+    });
+}
+
+// 更新语速显示
+function updateRateDisplay() {
+    const rateLabels = {
+        '-50': '0.5x (很慢)',
+        '-40': '0.6x',
+        '-30': '0.7x',
+        '-25': '0.75x (较慢)',
+        '-20': '0.8x',
+        '-10': '0.9x',
+        '0': '1x (正常)',
+        '10': '1.1x',
+        '20': '1.2x',
+        '25': '1.25x (较快)',
+        '30': '1.3x',
+        '40': '1.4x',
+        '50': '1.5x (快)',
+        '60': '1.6x',
+        '70': '1.7x',
+        '80': '1.8x',
+        '90': '1.9x',
+        '100': '2x (很快)'
+    };
+    rateValue.textContent = rateLabels[currentRate.toString()] || `${(1 + currentRate / 100).toFixed(2)}x`;
+}
+
+// 更新语速选项高亮
+function updateRateOptions() {
+    document.querySelectorAll('.rate-option').forEach(option => {
+        const rate = parseInt(option.dataset.rate);
+        option.classList.toggle('active', rate === currentRate);
+    });
 }
 
 // 更新字符计数
@@ -110,7 +167,7 @@ async function generateAudio() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ text, voice })
+            body: JSON.stringify({ text, voice, rate: currentRate })
         });
 
         const data = await response.json();
@@ -159,7 +216,14 @@ function renderAudioList() {
         return;
     }
 
-    audioListContainer.innerHTML = audioList.map(item => `
+    audioListContainer.innerHTML = audioList.map(item => {
+        const rate = item.rate || 0;
+        const rateLabel = formatRateLabel(rate);
+        const voiceShort = item.voice.includes('(') ?
+            item.voice.match(/\(([^)]+)\)/)[1] :
+            item.voice;
+
+        return `
         <div class="audio-item" data-id="${item.id}">
             <div class="audio-header">
                 <div class="audio-text">
@@ -175,11 +239,20 @@ function renderAudioList() {
                 <audio controls src="/audio/${item.filename}"></audio>
             </div>
             <div class="audio-meta">
-                <span>🎙️ ${item.voice}</span>
+                <span>🎙️ ${escapeHtml(voiceShort)}</span>
+                <span>⚡ ${rateLabel}</span>
                 <span>📅 ${formatDate(item.created_at)}</span>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
+}
+
+// 格式化语速标签
+function formatRateLabel(rate) {
+    if (!rate || rate === 0) return '1x 正常';
+    if (rate < 0) return `${(1 + rate / 100).toFixed(2)}x 慢速`;
+    return `${(1 + rate / 100).toFixed(2)}x 快速`;
 }
 
 // 切换文本显示

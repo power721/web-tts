@@ -88,6 +88,89 @@ header h1 {
     border-color: var(--primary);
 }
 
+/* 语速控制 */
+.rate-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.rate-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    min-width: 20px;
+}
+
+#rate-slider {
+    flex: 1;
+    height: 6px;
+    background: var(--surface-hover);
+    border-radius: 3px;
+    outline: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+#rate-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: var(--primary);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#rate-slider::-webkit-slider-thumb:hover {
+    background: var(--primary-hover);
+}
+
+#rate-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: var(--primary);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#rate-slider::-moz-range-thumb:hover {
+    background: var(--primary-hover);
+}
+
+.rate-percentages {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.rate-option {
+    flex: 1;
+    padding: 6px 8px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.rate-option:hover {
+    border-color: var(--primary);
+    color: var(--text);
+}
+
+.rate-option.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
 #text-input {
     width: 100%;
     min-height: 150px;

@@ -84,6 +84,7 @@ def generate_audio():
         data = request.get_json()
         text = data.get('text', '').strip()
         voice = data.get('voice', 'zh-CN-XiaoxiaoNeural')
+        rate = data.get('rate', 0)  # 语速，-50到100
 
         if not text:
             return jsonify({'error': '文本不能为空'}), 400
@@ -96,9 +97,12 @@ def generate_audio():
         filename = f"{audio_id}.mp3"
         filepath = os.path.join(AUDIO_DIR, filename)
 
+        # 格式化语速参数
+        rate_str = f"{rate:+d}%" if rate != 0 else "+0%"
+
         # 异步生成音频
         async def create_audio():
-            communicate = Communicate(text, voice)
+            communicate = Communicate(text, voice, rate=rate_str)
             await communicate.save(filepath)
 
         # 运行异步任务（使用 asyncio.run）
@@ -130,6 +134,7 @@ def generate_audio():
             'text': text[:100] + '...' if len(text) > 100 else text,
             'full_text': text,
             'voice': voice,
+            'rate': rate,
             'created_at': datetime.now().isoformat()
         })
         save_metadata(metadata)
