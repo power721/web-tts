@@ -422,7 +422,8 @@ header h1 {
     gap: 12px;
     max-height: 600px;
     overflow-y: auto;
-    padding-right: 8px;
+    padding: 8px;
+    margin: -8px;
 }
 
 /* 自定义滚动条样式 */
