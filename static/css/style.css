@@ -115,7 +115,7 @@ header h1 {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
-    max-height: 400px;
+    max-height: 500px;
     overflow-y: auto;
 }
 
@@ -125,6 +125,25 @@ header h1 {
 
 .voice-list {
     padding: 8px;
+}
+
+/* 语音下拉框滚动条样式 */
+.voice-dropdown::-webkit-scrollbar {
+    width: 8px;
+}
+
+.voice-dropdown::-webkit-scrollbar-track {
+    background: var(--background);
+    border-radius: 4px;
+}
+
+.voice-dropdown::-webkit-scrollbar-thumb {
+    background: var(--surface-hover);
+    border-radius: 4px;
+}
+
+.voice-dropdown::-webkit-scrollbar-thumb:hover {
+    background: var(--border);
 }
 
 .voice-family {
