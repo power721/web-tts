@@ -67,25 +67,176 @@ header h1 {
     color: var(--text-secondary);
 }
 
-#voice-select {
-    width: 100%;
+/* 语音选择器 */
+.voice-selector {
+    display: flex;
+    gap: 8px;
+}
+
+#voice-search {
+    flex: 1;
     padding: 12px 16px;
     background: var(--background);
     border: 1px solid var(--border);
     border-radius: 8px;
     color: var(--text);
     font-size: 1rem;
-    cursor: pointer;
     transition: border-color 0.2s;
 }
 
-#voice-select:hover {
+#voice-search:hover {
     border-color: var(--primary);
 }
 
-#voice-select:focus {
+#voice-search:focus {
     outline: none;
     border-color: var(--primary);
+}
+
+.voice-toggle-btn {
+    padding: 12px 16px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 50px;
+}
+
+.voice-toggle-btn:hover {
+    background: var(--surface-hover);
+    border-color: var(--primary);
+}
+
+.voice-dropdown {
+    position: relative;
+    margin-top: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.voice-dropdown.hidden {
+    display: none;
+}
+
+.voice-list {
+    padding: 8px;
+}
+
+.voice-family {
+    margin-bottom: 8px;
+}
+
+.voice-family-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--background);
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.voice-family-header:hover {
+    background: var(--surface-hover);
+}
+
+.voice-family-header .collapse-icon {
+    margin-left: auto;
+    transition: transform 0.2s;
+}
+
+.voice-family-header.collapsed .collapse-icon {
+    transform: rotate(-90deg);
+}
+
+.voice-family-voices {
+    max-height: 500px;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.voice-family-voices.collapsed {
+    max-height: 0;
+}
+
+.voice-option {
+    padding: 8px 12px 8px 32px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.voice-option:hover {
+    background: var(--surface-hover);
+}
+
+.voice-option.selected {
+    background: var(--primary);
+    color: white;
+}
+
+.voice-option .voice-lang {
+    font-weight: 500;
+    flex: 1;
+}
+
+.voice-option .voice-locale {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.selected-voice {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.voice-placeholder {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.selected-voice-info {
+    flex: 1;
+}
+
+.selected-voice-clear {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.selected-voice-clear:hover {
+    color: var(--danger);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.voice-no-results {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-secondary);
 }
 
 /* 语速控制 */

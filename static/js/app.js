@@ -3,9 +3,16 @@ let voices = [];
 let audioList = [];
 let currentAudioId = null;
 let currentRate = 0; // 语速，0表示正常
+let selectedVoice = null; // 当前选中的语音
+let collapsedFamilies = new Set(); // 折叠的语系
 
 // DOM元素
 const voiceSelect = document.getElementById('voice-select');
+const voiceSearch = document.getElementById('voice-search');
+const voiceToggle = document.getElementById('voice-toggle');
+const voiceDropdown = document.getElementById('voice-dropdown');
+const voiceList = document.getElementById('voice-list');
+const selectedVoiceEl = document.getElementById('selected-voice');
 const textInput = document.getElementById('text-input');
 const charCount = document.getElementById('char-count');
 const rateSlider = document.getElementById('rate-slider');
@@ -28,6 +35,7 @@ function setupEventListeners() {
     generateBtn.addEventListener('click', generateAudio);
     refreshBtn.addEventListener('click', loadAudioList);
     setupRateControl();
+    setupVoiceSelector();
 }
 
 // 设置语速控制
@@ -90,6 +98,46 @@ function updateCharCount() {
     charCount.style.color = count > 5000 ? 'var(--danger)' : 'var(--text-secondary)';
 }
 
+// 设置语音选择器
+function setupVoiceSelector() {
+    // 搜索框
+    voiceSearch.addEventListener('input', (e) => {
+        filterVoices(e.target.value);
+        showVoiceDropdown();
+    });
+
+    voiceSearch.addEventListener('focus', () => {
+        showVoiceDropdown();
+    });
+
+    // 切换按钮
+    voiceToggle.addEventListener('click', () => {
+        toggleVoiceDropdown();
+    });
+
+    // 点击外部关闭下拉框
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.voice-selector') && !e.target.closest('.voice-dropdown')) {
+            hideVoiceDropdown();
+        }
+    });
+}
+
+// 显示/隐藏下拉框
+function showVoiceDropdown() {
+    voiceDropdown.classList.remove('hidden');
+}
+
+function hideVoiceDropdown() {
+    voiceDropdown.classList.add('hidden');
+}
+
+function toggleVoiceDropdown() {
+    voiceDropdown.classList.toggle('hidden');
+    const icon = document.getElementById('voice-toggle-icon');
+    icon.textContent = voiceDropdown.classList.contains('hidden') ? '▼' : '▲';
+}
+
 // 加载语音列表
 async function loadVoices() {
     try {
@@ -98,42 +146,12 @@ async function loadVoices() {
 
         if (data.voices) {
             voices = data.voices;
-
-            // 清空并重新填充
-            voiceSelect.innerHTML = '';
-
-            // 按地区分组
-            const grouped = {};
-            voices.forEach(voice => {
-                const region = voice.region;
-                if (!grouped[region]) {
-                    grouped[region] = [];
-                }
-                grouped[region].push(voice);
-            });
-
-            // 创建选项（按顺序：中文、美音、英音）
-            const regionOrder = ['中文', '美音', '英音'];
-            regionOrder.forEach(region => {
-                if (grouped[region]) {
-                    const optgroup = document.createElement('optgroup');
-                    optgroup.label = region;
-
-                    grouped[region].forEach(voice => {
-                        const option = document.createElement('option');
-                        option.value = voice.id;
-                        option.textContent = voice.short_name;
-                        optgroup.appendChild(option);
-                    });
-
-                    voiceSelect.appendChild(optgroup);
-                }
-            });
+            renderVoiceList(voices);
 
             // 设置默认选择中文
-            const zhOption = voiceSelect.querySelector('option[value*="zh-CN"]');
-            if (zhOption) {
-                voiceSelect.value = zhOption.value;
+            const defaultVoice = voices.find(v => v.locale === 'zh-CN');
+            if (defaultVoice) {
+                selectVoice(defaultVoice);
             }
         }
     } catch (error) {
@@ -142,10 +160,146 @@ async function loadVoices() {
     }
 }
 
+// 渲染语音列表
+function renderVoiceList(voicesToRender) {
+    // 语系信息
+    const families = {
+        'east-asian': { name: '东亚语言', icon: '🌏' },
+        'english': { name: '英语系', icon: '🇬🇧' },
+        'european': { name: '欧洲语言', icon: '🇪🇺' },
+        'eastern-european': { name: '东欧语言', icon: '🌍' },
+        'middle-east': { name: '中东语言', icon: '🕌' },
+        'south-asian': { name: '南亚语言', icon: '🇮🇳' },
+        'southeast-asian': { name: '东南亚语言', icon: '🌴' },
+        'other': { name: '其他语言', icon: '🌐' }
+    };
+
+    // 按语系和语言分组
+    const grouped = {};
+    voicesToRender.forEach(voice => {
+        const family = voice.family || 'other';
+        const lang = voice.language_name || voice.language;
+
+        if (!grouped[family]) {
+            grouped[family] = {};
+        }
+        if (!grouped[family][lang]) {
+            grouped[family][lang] = [];
+        }
+        grouped[family][lang].push(voice);
+    });
+
+    // 生成HTML
+    let html = '';
+
+    for (const [familyKey, familyData] of Object.entries(grouped)) {
+        const familyInfo = families[familyKey] || families['other'];
+        const isCollapsed = collapsedFamilies.has(familyKey);
+
+        html += `
+            <div class="voice-family">
+                <div class="voice-family-header ${isCollapsed ? 'collapsed' : ''}"
+                     onclick="toggleFamily('${familyKey}')">
+                    <span>${familyInfo.icon} ${familyInfo.name}</span>
+                    <span class="collapse-icon">▼</span>
+                </div>
+                <div class="voice-family-voices ${isCollapsed ? 'collapsed' : ''}">
+        `;
+
+        for (const [lang, langVoices] of Object.entries(familyData)) {
+            html += `<div style="padding: 4px 12px; color: var(--text-secondary); font-size: 0.875rem;">${lang}</div>`;
+
+            langVoices.forEach(voice => {
+                const isSelected = selectedVoice && selectedVoice.id === voice.id;
+                html += `
+                    <div class="voice-option ${isSelected ? 'selected' : ''}"
+                         onclick="selectVoiceById('${voice.id}')">
+                        <span class="voice-lang">${voice.short_name}</span>
+                        <span class="voice-locale">${voice.locale}</span>
+                    </div>
+                `;
+            });
+        }
+
+        html += `
+                </div>
+            </div>
+        `;
+    }
+
+    if (voicesToRender.length === 0) {
+        html = '<div class="voice-no-results">未找到匹配的语音</div>';
+    }
+
+    voiceList.innerHTML = html;
+}
+
+// 过滤语音列表
+function filterVoices(query) {
+    query = query.toLowerCase().trim();
+
+    if (!query) {
+        renderVoiceList(voices);
+        return;
+    }
+
+    const filtered = voices.filter(voice => {
+        return voice.short_name.toLowerCase().includes(query) ||
+               voice.locale.toLowerCase().includes(query) ||
+               (voice.language_name && voice.language_name.toLowerCase().includes(query)) ||
+               (voice.language && voice.language.toLowerCase().includes(query));
+    });
+
+    renderVoiceList(filtered);
+}
+
+// 选择语音
+function selectVoiceById(voiceId) {
+    const voice = voices.find(v => v.id === voiceId);
+    if (voice) {
+        selectVoice(voice);
+        hideVoiceDropdown();
+    }
+}
+
+function selectVoice(voice) {
+    selectedVoice = voice;
+    voiceSelect.value = voice.id;
+
+    // 更新显示
+    selectedVoiceEl.innerHTML = `
+        <div class="selected-voice-info">
+            <strong>${voice.short_name}</strong>
+            <span style="color: var(--text-secondary); margin-left: 8px;">${voice.locale}</span>
+        </div>
+        <button class="selected-voice-clear" onclick="clearVoice()" title="清除">×</button>
+    `;
+
+    // 重新渲染列表以更新选中状态
+    filterVoices(voiceSearch.value);
+}
+
+// 清除选择
+function clearVoice() {
+    selectedVoice = null;
+    voiceSelect.value = '';
+    selectedVoiceEl.innerHTML = '<span class="voice-placeholder">请选择语音</span>';
+    filterVoices(voiceSearch.value);
+}
+
+// 切换语系折叠
+function toggleFamily(familyKey) {
+    if (collapsedFamilies.has(familyKey)) {
+        collapsedFamilies.delete(familyKey);
+    } else {
+        collapsedFamilies.add(familyKey);
+    }
+    filterVoices(voiceSearch.value);
+}
+
 // 生成音频
 async function generateAudio() {
     const text = textInput.value.trim();
-    const voice = voiceSelect.value;
 
     if (!text) {
         showNotification('请输入文本', 'warning');
@@ -153,10 +307,18 @@ async function generateAudio() {
         return;
     }
 
+    if (!selectedVoice) {
+        showNotification('请选择语音', 'warning');
+        voiceSearch.focus();
+        return;
+    }
+
     if (text.length > 5000) {
         showNotification('文本长度不能超过5000字符', 'error');
         return;
     }
+
+    const voice = selectedVoice.id;
 
     showLoading(true);
     generateBtn.disabled = true;

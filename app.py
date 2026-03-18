@@ -45,7 +45,7 @@ def index():
 
 @app.route('/api/voices')
 def get_voices():
-    """获取中文、美音和英音语音"""
+    """获取所有语音，按语系分组"""
     try:
         async def fetch_voices():
             return await list_voices()
@@ -55,23 +55,96 @@ def get_voices():
         voices = loop.run_until_complete(fetch_voices())
         loop.close()
 
+        # 语系分类
+        language_families = {
+            'east-asian': {
+                'name': '东亚语言',
+                'languages': ['zh', 'ja', 'ko'],
+                'icon': '🌏'
+            },
+            'english': {
+                'name': '英语系',
+                'languages': ['en'],
+                'icon': '🇬🇧'
+            },
+            'european': {
+                'name': '欧洲语言',
+                'languages': ['fr', 'de', 'es', 'it', 'pt', 'nl', 'sv', 'da', 'no', 'fi'],
+                'icon': '🇪🇺'
+            },
+            'eastern-european': {
+                'name': '东欧语言',
+                'languages': ['ru', 'pl', 'cs', 'ro', 'bg', 'hr', 'sk', 'sl', 'sr', 'uk', 'hu', 'el', 'tr'],
+                'icon': '🌍'
+            },
+            'middle-east': {
+                'name': '中东语言',
+                'languages': ['ar', 'he', 'fa', 'ur'],
+                'icon': '🕌'
+            },
+            'south-asian': {
+                'name': '南亚语言',
+                'languages': ['hi', 'bn', 'ta', 'te', 'mr', 'gu', 'kn', 'ml', 'pa', 'si'],
+                'icon': '🇮🇳'
+            },
+            'southeast-asian': {
+                'name': '东南亚语言',
+                'languages': ['th', 'vi', 'ms', 'id', 'fil', 'lo', 'km', 'my', 'jv', 'su'],
+                'icon': '🌴'
+            },
+            'other': {
+                'name': '其他语言',
+                'languages': [],  # 会自动包含未分类的语言
+                'icon': '🌐'
+            }
+        }
+
+        # 语言名称映射
+        language_names = {
+            'zh': '中文', 'ja': '日语', 'ko': '韩语',
+            'en': '英语', 'fr': '法语', 'de': '德语', 'es': '西班牙语',
+            'it': '意大利语', 'pt': '葡萄牙语', 'nl': '荷兰语', 'ru': '俄语',
+            'ar': '阿拉伯语', 'hi': '印地语', 'th': '泰语', 'vi': '越南语',
+            'sv': '瑞典语', 'da': '丹麦语', 'no': '挪威语', 'fi': '芬兰语',
+            'pl': '波兰语', 'cs': '捷克语', 'ro': '罗马尼亚语', 'bg': '保加利亚语',
+            'hr': '克罗地亚语', 'sk': '斯洛伐克语', 'sl': '斯洛文尼亚语',
+            'sr': '塞尔维亚语', 'uk': '乌克兰语', 'hu': '匈牙利语',
+            'el': '希腊语', 'tr': '土耳其语', 'he': '希伯来语', 'fa': '波斯语',
+            'ur': '乌尔都语', 'bn': '孟加拉语', 'ta': '泰米尔语',
+            'te': '泰卢固语', 'mr': '马拉地语', 'gu': '古吉拉特语',
+            'kn': '卡纳达语', 'ml': '马拉雅拉姆语', 'pa': '旁遮普语',
+            'si': '僧伽罗语', 'ms': '马来语', 'id': '印尼语',
+            'fil': '菲律宾语', 'lo': '老挝语', 'km': '高棉语',
+            'my': '缅甸语', 'jv': '爪哇语', 'su': '巽他语'
+        }
+
         voice_list = []
         for voice in voices:
             locale = voice.get('Locale', '')
-            # 只保留中文、美音和英音
-            if locale.startswith('zh') or locale in ['en-US', 'en-GB']:
-                # 提取简短名称：en-US, AndrewNeural
-                short_name = voice['Name'].replace('Microsoft Server Speech Text to Speech Voice (', '').replace(')', '')
-                voice_list.append({
-                    'id': voice['Name'],
-                    'name': voice['Name'],
-                    'short_name': short_name,
-                    'locale': locale,
-                    'language': 'zh' if locale.startswith('zh') else 'en',
-                    'region': '美音' if locale == 'en-US' else '英音' if locale == 'en-GB' else '中文'
-                })
-        # 按语言和地区分组
-        voice_list.sort(key=lambda x: (x['language'], x['locale']))
+            lang_code = locale.split('-')[0]
+
+            # 提取简短名称
+            short_name = voice['Name'].replace('Microsoft Server Speech Text to Speech Voice (', '').replace(')', '')
+
+            # 确定语系
+            family = 'other'
+            for family_key, family_data in language_families.items():
+                if family_key != 'other' and lang_code in family_data['languages']:
+                    family = family_key
+                    break
+
+            voice_list.append({
+                'id': voice['Name'],
+                'name': voice['Name'],
+                'short_name': short_name,
+                'locale': locale,
+                'language': lang_code,
+                'language_name': language_names.get(lang_code, lang_code.upper()),
+                'family': family
+            })
+
+        # 按语系、语言、地区分组
+        voice_list.sort(key=lambda x: (x['family'], x['language'], x['locale']))
         return jsonify({'voices': voice_list})
     except Exception as e:
         return jsonify({'error': str(e)}), 500

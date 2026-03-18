@@ -17,10 +17,27 @@
             <!-- 输入区域 -->
             <section class="input-section">
                 <div class="form-group">
-                    <label for="voice-select">选择语音</label>
-                    <select id="voice-select">
-                        <option value="">加载中...</option>
-                    </select>
+                    <label for="voice-search">选择语音</label>
+                    <div class="voice-selector">
+                        <input
+                            type="text"
+                            id="voice-search"
+                            placeholder="搜索语音（如：中文、英语、French...）"
+                            autocomplete="off"
+                        >
+                        <button id="voice-toggle" class="voice-toggle-btn" title="展开/收起">
+                            <span id="voice-toggle-icon">▼</span>
+                        </button>
+                    </div>
+                    <div id="voice-dropdown" class="voice-dropdown hidden">
+                        <div class="voice-list" id="voice-list">
+                            <div class="loading-voices">加载中...</div>
+                        </div>
+                    </div>
+                    <div id="selected-voice" class="selected-voice">
+                        <span class="voice-placeholder">请选择语音</span>
+                    </div>
+                    <input type="hidden" id="voice-select" value="">
                 </div>
 
                 <div class="form-group">
