@@ -420,6 +420,28 @@ header h1 {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+/* 自定义滚动条样式 */
+.audio-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.audio-list::-webkit-scrollbar-track {
+    background: var(--background);
+    border-radius: 4px;
+}
+
+.audio-list::-webkit-scrollbar-thumb {
+    background: var(--surface-hover);
+    border-radius: 4px;
+}
+
+.audio-list::-webkit-scrollbar-thumb:hover {
+    background: var(--border);
 }
 
 .audio-item {
