@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文本转语音 TTS</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎙️ 文本转语音</h1>
+            <p class="subtitle">基于 Microsoft Edge TTS</p>
+        </header>
+
+        <main>
+            <!-- 输入区域 -->
+            <section class="input-section">
+                <div class="form-group">
+                    <label for="voice-select">选择语音</label>
+                    <select id="voice-select">
+                        <option value="">加载中...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="text-input">输入文本</label>
+                    <textarea
+                        id="text-input"
+                        placeholder="请输入要转换的文本..."
+                        maxlength="5000"
+                    ></textarea>
+                    <div class="char-count">
+                        <span id="char-count">0</span> / 5000
+                    </div>
+                </div>
+
+                <button id="generate-btn" class="btn-primary">
+                    <span class="btn-icon">🎵</span>
+                    生成语音
+                </button>
+            </section>
+
+            <!-- 音频列表 -->
+            <section class="list-section">
+                <div class="section-header">
+                    <h2>📚 语音列表</h2>
+                    <button id="refresh-btn" class="btn-icon-only" title="刷新列表">🔄</button>
+                </div>
+
+                <div id="audio-list" class="audio-list">
+                    <div class="empty-state">
+                        <p>暂无语音文件</p>
+                        <p class="hint">在上方输入文本并生成语音</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 加载遮罩 -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p>生成中...</p>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

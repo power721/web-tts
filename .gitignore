@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Audio files
+audio/*.mp3
+audio/*.m4a
+audio/*.wav
+audio/*.ogg
+
+# Metadata
+audio/metadata.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+venv/
+env/
+.venv/
+
+# Logs
+*.log
