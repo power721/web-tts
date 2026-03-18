@@ -125,6 +125,8 @@ header h1 {
 
 .voice-list {
     padding: 8px;
+    /* 确保最后一个选项不被截断 */
+    padding-bottom: 16px;
 }
 
 /* 语音下拉框滚动条样式 */
