@@ -143,8 +143,46 @@ def get_voices():
                 'family': family
             })
 
-        # 按语系、语言、地区分组
-        voice_list.sort(key=lambda x: (x['family'], x['language'], x['locale']))
+        # 定义优先级（数字越小越靠前）
+        def get_priority(voice):
+            locale = voice['locale']
+            # 中文优先级最高
+            if locale.startswith('zh'):
+                # 简体中文 > 繁体中文 > 粤语
+                if locale == 'zh-CN':
+                    return 1
+                elif locale.startswith('zh-CN-'):
+                    return 2
+                elif locale == 'zh-TW':
+                    return 3
+                elif locale == 'zh-HK':
+                    return 4
+                else:
+                    return 5
+            # 美音第二
+            elif locale == 'en-US':
+                return 10
+            # 其他英语
+            elif locale.startswith('en'):
+                return 20
+            # 其他东亚语言
+            elif voice['family'] == 'east-asian':
+                return 30
+            # 按语系排序
+            else:
+                family_order = {
+                    'english': 40,
+                    'european': 50,
+                    'eastern-european': 60,
+                    'southeast-asian': 70,
+                    'south-asian': 80,
+                    'middle-east': 90,
+                    'other': 100
+                }
+                return family_order.get(voice['family'], 100)
+
+        # 按优先级、语言、地区排序
+        voice_list.sort(key=lambda x: (get_priority(x), x['language'], x['locale']))
         return jsonify({'voices': voice_list})
     except Exception as e:
         return jsonify({'error': str(e)}), 500

@@ -164,8 +164,10 @@ async function loadVoices() {
 function renderVoiceList(voicesToRender) {
     // 语系信息
     const families = {
+        'chinese': { name: '中文', icon: '🇨🇳' },
+        'en-US': { name: '美式英语', icon: '🇺🇸' },
         'east-asian': { name: '东亚语言', icon: '🌏' },
-        'english': { name: '英语系', icon: '🇬🇧' },
+        'english': { name: '其他英语', icon: '🇬🇧' },
         'european': { name: '欧洲语言', icon: '🇪🇺' },
         'eastern-european': { name: '东欧语言', icon: '🌍' },
         'middle-east': { name: '中东语言', icon: '🕌' },
@@ -177,7 +179,14 @@ function renderVoiceList(voicesToRender) {
     // 按语系和语言分组
     const grouped = {};
     voicesToRender.forEach(voice => {
-        const family = voice.family || 'other';
+        // 特殊处理中文和美音
+        let family = voice.family || 'other';
+        if (voice.locale.startsWith('zh')) {
+            family = 'chinese';
+        } else if (voice.locale === 'en-US') {
+            family = 'en-US';
+        }
+
         const lang = voice.language_name || voice.language;
 
         if (!grouped[family]) {
@@ -192,7 +201,15 @@ function renderVoiceList(voicesToRender) {
     // 生成HTML
     let html = '';
 
-    for (const [familyKey, familyData] of Object.entries(grouped)) {
+    // 定义语系显示顺序
+    const familyOrder = ['chinese', 'en-US', 'east-asian', 'english', 'european',
+                         'eastern-european', 'southeast-asian', 'south-asian',
+                         'middle-east', 'other'];
+
+    for (const familyKey of familyOrder) {
+        if (!grouped[familyKey]) continue;
+
+        const familyData = grouped[familyKey];
         const familyInfo = families[familyKey] || families['other'];
         const isCollapsed = collapsedFamilies.has(familyKey);
 
