@@ -5,6 +5,8 @@ let currentAudioId = null;
 let currentRate = 0; // 语速，0表示正常
 let selectedVoice = null; // 当前选中的语音
 let collapsedFamilies = new Set(); // 折叠的语系
+let abortController = null; // 用于取消请求
+let isGenerating = false; // 是否正在生成
 
 // DOM元素
 const voiceSelect = document.getElementById('voice-select');
@@ -21,9 +23,12 @@ const generateBtn = document.getElementById('generate-btn');
 const refreshBtn = document.getElementById('refresh-btn');
 const audioListContainer = document.getElementById('audio-list');
 const loadingOverlay = document.getElementById('loading-overlay');
+const cancelBtn = document.getElementById('cancel-btn');
+const loadingText = loadingOverlay.querySelector('.loading-text');
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
+    loadSavedPreferences();
     loadVoices();
     loadAudioList();
     setupEventListeners();
@@ -32,7 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // 设置事件监听
 function setupEventListeners() {
     textInput.addEventListener('input', updateCharCount);
-    generateBtn.addEventListener('click', generateAudio);
+    generateBtn.addEventListener('click', handleGenerateClick);
+    cancelBtn.addEventListener('click', cancelGeneration);
     refreshBtn.addEventListener('click', loadAudioList);
     setupRateControl();
     setupVoiceSelector();
@@ -45,6 +51,7 @@ function setupRateControl() {
         currentRate = parseInt(e.target.value);
         updateRateDisplay();
         updateRateOptions();
+        saveRatePreference();
     });
 
     // 快捷按钮控制
@@ -54,6 +61,7 @@ function setupRateControl() {
             rateSlider.value = currentRate;
             updateRateDisplay();
             updateRateOptions();
+            saveRatePreference();
         });
     });
 }
@@ -148,10 +156,13 @@ async function loadVoices() {
             voices = data.voices;
             renderVoiceList(voices);
 
-            // 设置默认选择中文
-            const defaultVoice = voices.find(v => v.locale === 'zh-CN');
-            if (defaultVoice) {
-                selectVoice(defaultVoice);
+            // 应用保存的语音选择或默认选择中文
+            applySavedVoice();
+            if (!selectedVoice) {
+                const defaultVoice = voices.find(v => v.locale === 'zh-CN');
+                if (defaultVoice) {
+                    selectVoice(defaultVoice);
+                }
             }
         }
     } catch (error) {
@@ -283,6 +294,9 @@ function selectVoice(voice) {
     selectedVoice = voice;
     voiceSelect.value = voice.id;
 
+    // 保存到localStorage
+    localStorage.setItem('selectedVoiceId', voice.id);
+
     // 更新显示
     selectedVoiceEl.innerHTML = `
         <div class="selected-voice-info">
@@ -300,6 +314,7 @@ function selectVoice(voice) {
 function clearVoice() {
     selectedVoice = null;
     voiceSelect.value = '';
+    localStorage.removeItem('selectedVoiceId');
     selectedVoiceEl.innerHTML = '<span class="voice-placeholder">请选择语音</span>';
     filterVoices(voiceSearch.value);
 }
@@ -312,6 +327,15 @@ function toggleFamily(familyKey) {
         collapsedFamilies.add(familyKey);
     }
     filterVoices(voiceSearch.value);
+}
+
+// 处理生成按钮点击
+function handleGenerateClick() {
+    if (isGenerating) {
+        cancelGeneration();
+    } else {
+        generateAudio();
+    }
 }
 
 // 生成音频
@@ -337,8 +361,12 @@ async function generateAudio() {
 
     const voice = selectedVoice.id;
 
+    // 创建新的 AbortController
+    abortController = new AbortController();
+    isGenerating = true;
+
     showLoading(true);
-    generateBtn.disabled = true;
+    updateGenerateButton(true);
 
     try {
         const response = await fetch('/api/generate', {
@@ -346,7 +374,8 @@ async function generateAudio() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ text, voice, rate: currentRate })
+            body: JSON.stringify({ text, voice, rate: currentRate }),
+            signal: abortController.signal
         });
 
         const data = await response.json();
@@ -360,11 +389,35 @@ async function generateAudio() {
             showNotification(data.error || '生成失败', 'error');
         }
     } catch (error) {
-        console.error('生成音频失败:', error);
-        showNotification('生成音频失败', 'error');
+        if (error.name === 'AbortError') {
+            showNotification('已取消生成', 'info');
+        } else {
+            console.error('生成音频失败:', error);
+            showNotification('生成音频失败', 'error');
+        }
     } finally {
         showLoading(false);
-        generateBtn.disabled = false;
+        updateGenerateButton(false);
+        isGenerating = false;
+        abortController = null;
+    }
+}
+
+// 取消生成
+function cancelGeneration() {
+    if (abortController) {
+        abortController.abort();
+    }
+}
+
+// 更新生成按钮状态
+function updateGenerateButton(generating) {
+    if (generating) {
+        generateBtn.innerHTML = '<span class="btn-icon">✕</span>取消生成';
+        generateBtn.classList.add('btn-cancel');
+    } else {
+        generateBtn.innerHTML = '<span class="btn-icon">🎵</span>生成语音';
+        generateBtn.classList.remove('btn-cancel');
     }
 }
 
@@ -535,6 +588,34 @@ function formatDate(isoString) {
         hour: '2-digit',
         minute: '2-digit'
     });
+}
+
+// 保存语速偏好
+function saveRatePreference() {
+    localStorage.setItem('speechRate', currentRate.toString());
+}
+
+// 加载保存的偏好设置
+function loadSavedPreferences() {
+    // 加载语速偏好
+    const savedRate = localStorage.getItem('speechRate');
+    if (savedRate !== null) {
+        currentRate = parseInt(savedRate);
+        rateSlider.value = currentRate;
+        updateRateDisplay();
+        updateRateOptions();
+    }
+}
+
+// 在语音列表加载完成后应用保存的语音选择
+function applySavedVoice() {
+    const savedVoiceId = localStorage.getItem('selectedVoiceId');
+    if (savedVoiceId && voices.length > 0) {
+        const voice = voices.find(v => v.id === savedVoiceId);
+        if (voice) {
+            selectVoice(voice);
+        }
+    }
 }
 
 // 添加动画样式
