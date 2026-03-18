@@ -125,8 +125,6 @@ header h1 {
 
 .voice-list {
     padding: 8px;
-    /* 确保最后一个选项不被截断 */
-    padding-bottom: 16px;
 }
 
 /* 语音下拉框滚动条样式 */
@@ -179,9 +177,9 @@ header h1 {
 }
 
 .voice-family-voices {
-    max-height: 500px;
+    max-height: 5000px;
     overflow: hidden;
-    transition: max-height 0.3s ease-out;
+    transition: max-height 0.5s ease-out;
 }
 
 .voice-family-voices.collapsed {
